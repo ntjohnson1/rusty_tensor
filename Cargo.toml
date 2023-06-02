@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 ndarray = "0.15.6"
+ndarray-linalg = "0.16.0"
+
+[features]
+openblas = ["ndarray-linalg/openblas"]
+netlib = ["ndarray-linalg/netlib"]
+intel-mkl = ["ndarray-linalg/intel-mkl"]
