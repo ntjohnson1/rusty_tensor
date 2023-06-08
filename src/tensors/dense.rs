@@ -3,14 +3,14 @@ use ndarray::{s, Array, Ix2, IxDyn, Order};
 use ndarray_linalg::Norm;
 
 #[derive(Debug)]
-pub struct DenseTensor {
+pub struct Dense {
     // TODO probably want data trait on struct
     // for different data types
     data: Array<f64, IxDyn>,
     shape: Vec<usize>,
 }
 
-impl DenseTensor {
+impl Dense {
     pub fn new() -> Self {
         Self {
             data: Array::<f64, IxDyn>::zeros(IxDyn(&[0])),
@@ -42,7 +42,7 @@ impl DenseTensor {
         self.data.norm()
     }
 
-    pub fn innerprod(&self, other: &DenseTensor) -> f64 {
+    pub fn innerprod(&self, other: &Dense) -> f64 {
         // TODO check shape
         // TODO This makes a flat copy, check if we can do it with view
         let flat_self = Array::from_iter(self.data.iter().cloned());
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn empty_dense_tensor() {
-        let tensor = DenseTensor::new();
+        let tensor = Dense::new();
         assert!(tensor.shape.is_empty());
         assert!(tensor.data.is_empty());
     }
@@ -137,51 +137,51 @@ mod tests {
     #[test]
     fn dense_tensor_from_data() {
         let array = Array::<f64, IxDyn>::zeros(IxDyn(&[3, 3]));
-        let tensor = DenseTensor::from_data(&array, &None);
+        let tensor = Dense::from_data(&array, &None);
         assert!(!tensor.shape.is_empty());
         assert!(!tensor.data.is_empty());
 
         let array = Array::<f64, IxDyn>::zeros(IxDyn(&[3, 3]));
         let shape: Vec<usize> = vec![9, 1];
-        let tensor = DenseTensor::from_data(&array, &Some(shape));
+        let tensor = Dense::from_data(&array, &Some(shape));
         assert!(!tensor.shape.is_empty());
         assert!(!tensor.data.is_empty());
     }
 
     #[test]
     fn ndims() {
-        let tensor = DenseTensor::new();
+        let tensor = Dense::new();
         assert!(tensor.ndims() == 0);
 
         let array = Array::<f64, IxDyn>::zeros(IxDyn(&[3, 3]));
-        let tensor = DenseTensor::from_data(&array, &None);
+        let tensor = Dense::from_data(&array, &None);
         assert!(tensor.ndims() == 2);
     }
 
     #[test]
     fn norm() {
-        let tensor = DenseTensor::new();
+        let tensor = Dense::new();
         assert!(tensor.norm() == 0.0);
 
         let array = Array::<f64, IxDyn>::ones(IxDyn(&[3, 3]));
-        let tensor = DenseTensor::from_data(&array, &None);
+        let tensor = Dense::from_data(&array, &None);
         assert!(tensor.norm() == 3.0);
     }
 
     #[test]
     fn innerprod() {
-        let tensor = DenseTensor::new();
+        let tensor = Dense::new();
         assert!(tensor.innerprod(&tensor) == 0.0);
 
         let array = Array::<f64, IxDyn>::ones(IxDyn(&[3, 3, 3]));
-        let tensor = DenseTensor::from_data(&array, &None);
+        let tensor = Dense::from_data(&array, &None);
         assert!(tensor.innerprod(&tensor) == 27.0);
     }
 
     #[test]
     fn mttkrp_two_way() {
         let array = Array::<f64, IxDyn>::ones(IxDyn(&[2, 3, 4]));
-        let tensor = DenseTensor::from_data(&array, &None);
+        let tensor = Dense::from_data(&array, &None);
         let factors = vec![
             array![[1.0, 3.0], [2.0, 4.0]],
             array![[5.0, 8.0], [6.0, 9.0], [7.0, 10.0]],
