@@ -1,5 +1,5 @@
-use crate::utils::ndarray_helpers::{max_abs, sign};
-use ndarray::{s, Array, Ix1, Ix2};
+use crate::utils::ndarray_helpers::{max_abs, p_norm, sign};
+use ndarray::{s, Array, Array2, Ix1, Ix2};
 
 #[derive(Debug)]
 pub struct Kruskal {
@@ -66,6 +66,102 @@ impl Kruskal {
             }
         }
         true
+    }
+
+    pub fn arrange(&mut self, permutation: &Option<&[usize]>) {
+        // Only a partial implementation of arrange to get normalize settled
+        let permutation = permutation.unwrap();
+        if permutation.len() == self.ncomponents() {
+            let mut swap = Array::<f64, Ix1>::zeros(self.ncomponents());
+            for i in 0..self.weights.len() {
+                swap[i] = self.weights[permutation[i]];
+            }
+            self.weights = swap;
+            for i in 0..self.ndims() {
+                let mut swap = Array::<f64, Ix2>::zeros(self.factor_matrices[i].raw_dim());
+                for j in 0..permutation.len() {
+                    swap.slice_mut(s![.., j])
+                        .assign(&self.factor_matrices[i].slice(s![.., permutation[j]]));
+                }
+                self.factor_matrices[i] = swap;
+            }
+            return;
+        }
+    }
+
+    pub fn normalize(
+        &mut self,
+        weight_factor: &Option<usize>,
+        sort: &Option<bool>,
+        normtype: &Option<i64>,
+        mode: &Option<usize>,
+    ) {
+        let sort = sort.unwrap_or(false);
+        let normtype = normtype.unwrap_or(2);
+
+        if !mode.is_none() {
+            let mode = mode.unwrap();
+            if mode < self.ndims() {
+                for r in 0..self.ncomponents() {
+                    let tmp = p_norm(self.factor_matrices[mode].slice(s![.., r]), normtype);
+                    if tmp > 0.0 {
+                        self.factor_matrices[mode]
+                            .slice_mut(s![.., r])
+                            .map_inplace(|val| *val *= 1.0 / tmp);
+                    }
+                    self.weights[r] *= tmp;
+                }
+                return;
+            } else {
+                panic!("Parameter single_factor is invalid; index must be an int in range of number of dimensions");
+            }
+        }
+        for mode in 0..self.ndims() {
+            for r in 0..self.ncomponents() {
+                let tmp = p_norm(self.factor_matrices[mode].slice(s![.., r]), normtype);
+                if tmp > 0.0 {
+                    self.factor_matrices[mode]
+                        .slice_mut(s![.., r])
+                        .map_inplace(|val| *val *= 1.0 / tmp);
+                }
+                self.weights[r] *= tmp;
+            }
+        }
+
+        // Check that all weights are positive, flip sign of columns in first factor matrix if negative weight found
+        for i in 0..self.ncomponents() {
+            if self.weights[i] < 0.0 {
+                self.weights[i] *= -1.0;
+                self.factor_matrices[0]
+                    .slice_mut(s![.., i])
+                    .map_inplace(|val| *val *= -1.0);
+            }
+        }
+
+        // TODO how to handle 'all'
+        // Absorb weight into factors
+        if weight_factor.is_some() && false {
+            // All factors
+            let d =
+                Array2::from_diag(&self.weights.mapv(|val| val.powf(1.0 / self.ndims() as f64)));
+            for i in 0..self.ndims() {
+                self.factor_matrices[i] = self.factor_matrices[i].dot(&d);
+            }
+            self.weights.fill(1.0);
+        } else if weight_factor.is_some() && weight_factor.unwrap() <= self.ndims() {
+            // Single factor
+            let idx = weight_factor.unwrap();
+            let d = Array2::from_diag(&self.weights);
+            self.factor_matrices[idx] = self.factor_matrices[idx].dot(&d);
+            self.weights.fill(1.0);
+        }
+
+        if sort && self.ncomponents() > 1 {
+            // This needs arrange :(
+            let mut p = (0..self.weights.len()).collect::<Vec<_>>();
+            p.sort_by(|&a_idx, &b_idx| self.weights[a_idx].total_cmp(&self.weights[b_idx]));
+            self.arrange(&Some(&p));
+        }
     }
 
     pub fn fixsigns(&mut self, other: &Option<Kruskal>) -> &Self {
@@ -241,4 +337,21 @@ mod tests {
         tensor_1.fixsigns(&None);
         assert!(tensor_1.isequal(&tensor_2));
     }
+
+    #[test]
+    fn arrange() {
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let mut tensor_1 = Kruskal::from_data(&weights, &factors);
+        let tensor_2 = Kruskal::from_data(&weights, &factors);
+        tensor_1.arrange(&Some(&vec![1, 0]));
+        tensor_1.arrange(&Some(&vec![1, 0]));
+        assert!(tensor_1.isequal(&tensor_2));
+    }
+
+    #[test]
+    fn normalize() {}
 }

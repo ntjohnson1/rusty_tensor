@@ -1,4 +1,5 @@
 use ndarray::{ArrayView, Ix1};
+use ndarray_linalg::Norm;
 
 /// Gets largest value (in aboslute terms) but return original value
 /// Roughly equivalent to
@@ -28,6 +29,17 @@ pub fn sign(value: f64) -> f64 {
         }
     };
     sign_value
+}
+
+/// Helper to map to the name ndarray norms
+pub fn p_norm(array: ArrayView<f64, Ix1>, p: i64) -> f64 {
+    // TODO explore other norm options/ inf norm representation
+    let norm = match p {
+        1 => array.norm_l1(),
+        2 => array.norm_l2(),
+        _ => panic!("unsupported norm type"),
+    };
+    norm
 }
 
 #[cfg(test)]
