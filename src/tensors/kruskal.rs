@@ -159,7 +159,7 @@ impl Kruskal {
         if sort && self.ncomponents() > 1 {
             // This needs arrange :(
             let mut p = (0..self.weights.len()).collect::<Vec<_>>();
-            p.sort_by(|&a_idx, &b_idx| self.weights[a_idx].total_cmp(&self.weights[b_idx]));
+            p.sort_by(|&a_idx, &b_idx| self.weights[b_idx].total_cmp(&self.weights[a_idx]));
             self.arrange(&Some(&p));
         }
     }
@@ -353,5 +353,128 @@ mod tests {
     }
 
     #[test]
-    fn normalize() {}
+    fn normalize() {
+        // Values are from pyttb from MATLAB would be nice if we had a better first principles approach
+        let weights = array![2.0, 2.0];
+        let factors = vec![
+            array![[1.0, 3.0], [2.0, 4.0]],
+            array![[5.0, 8.0], [6.0, 9.0], [7.0, 10.0]],
+            array![[11.0, 15.0], [12.0, 16.0], [13.0, 17.0], [14.0, 18.0]],
+        ];
+
+        let mut tensor_0 = Kruskal::from_data(&weights, &factors);
+        let expected_weights = array![20.97617696340303, 31.304951684997057];
+        let expected_factor_matrix1 = array![
+            [0.4767312946227962, 0.5111012519999519],
+            [0.5720775535473555, 0.5749889084999459],
+            [0.6674238124719146, 0.6388765649999399]
+        ];
+        // Normalize mode 1
+        tensor_0.normalize(&None, &None, &None, &Some(1));
+        assert!(tensor_0.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_0.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+
+        let mut tensor_1 = Kruskal::from_data(&weights, &factors);
+        // Normalize with defaults
+        tensor_1.normalize(&None, &None, &None, &None);
+        let expected_weights = array![1177.285012220915, 5177.161384388167];
+        let expected_factor_matrix0 = array![[0.4472135954999579, 0.6], [0.8944271909999159, 0.8]];
+        // factor_matrix1 unchanged from above
+        let expected_factor_matrix2 = array![
+            [0.4382504900892777, 0.4535055413676754],
+            [0.4780914437337575, 0.4837392441255204],
+            [0.5179323973782373, 0.5139729468833655],
+            [0.5577733510227171, 0.5442066496412105]
+        ];
+        assert!(tensor_1.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_1.factor_matrices[0].abs_diff_eq(&expected_factor_matrix0, 1e-8));
+        assert!(tensor_1.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+        assert!(tensor_1.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
+
+        let mut tensor_2 = Kruskal::from_data(&weights, &factors);
+        // Normalize with 1-norm
+        tensor_2.normalize(&None, &None, &Some(1), &None);
+        let expected_weights = array![5400.0, 24948.0];
+        let expected_factor_matrix0 = array![
+            [0.3333333333333333, 0.4285714285714285],
+            [0.6666666666666666, 0.5714285714285714]
+        ];
+        let expected_factor_matrix1 = array![
+            [0.2777777777777778, 0.2962962962962963],
+            [0.3333333333333333, 0.3333333333333333],
+            [0.3888888888888888, 0.3703703703703703]
+        ];
+        let expected_factor_matrix2 = array![
+            [0.22, 0.2272727272727273],
+            [0.24, 0.2424242424242424],
+            [0.26, 0.2575757575757576],
+            [0.28, 0.2727272727272727]
+        ];
+        assert!(tensor_2.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_2.factor_matrices[0].abs_diff_eq(&expected_factor_matrix0, 1e-8));
+        assert!(tensor_2.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+        assert!(tensor_2.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
+
+        let mut tensor_3 = Kruskal::from_data(&weights, &factors);
+        // Normalize into weight factor 1
+        tensor_3.normalize(&Some(1), &None, &None, &None);
+        let expected_weights = array![1.0, 1.0];
+        let expected_factor_matrix0 = array![
+            [0.4472135954999579, 0.6000000000000001],
+            [0.8944271909999159, 0.8],
+        ];
+        let expected_factor_matrix1 = array![
+            [561.2486080160912, 2646.0536653665963],
+            [673.4983296193095, 2976.8103735374207],
+            [785.7480512225277, 3307.567081708246]
+        ];
+        let expected_factor_matrix2 = array![
+            [0.4382504900892776, 0.4535055413676753],
+            [0.4780914437337574, 0.4837392441255204],
+            [0.5179323973782373, 0.5139729468833654],
+            [0.557773351022717, 0.5442066496412105]
+        ];
+        assert!(tensor_3.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_3.factor_matrices[0].abs_diff_eq(&expected_factor_matrix0, 1e-8));
+        assert!(tensor_3.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+        assert!(tensor_3.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
+
+        let mut tensor_4 = Kruskal::from_data(&weights, &factors);
+        // Normalize and sort
+        tensor_4.normalize(&None, &Some(true), &None, &None);
+        let expected_weights = array![5177.161384388167, 1177.285012220915];
+        let expected_factor_matrix0 = array![
+            [0.6000000000000001, 0.4472135954999579],
+            [0.8, 0.8944271909999159]
+        ];
+        let expected_factor_matrix1 = array![
+            [0.5111012519999519, 0.4767312946227962],
+            [0.5749889084999459, 0.5720775535473555],
+            [0.6388765649999399, 0.6674238124719146]
+        ];
+        let expected_factor_matrix2 = array![
+            [0.4535055413676753, 0.4382504900892776],
+            [0.4837392441255204, 0.4780914437337574],
+            [0.5139729468833654, 0.5179323973782373],
+            [0.5442066496412105, 0.557773351022717]
+        ];
+        assert!(tensor_4.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_4.factor_matrices[0].abs_diff_eq(&expected_factor_matrix0, 1e-8));
+        assert!(tensor_4.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+        assert!(tensor_4.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
+
+        // TODO test ALL option when the interface is determined
+    }
+
+    #[test]
+    #[should_panic]
+    fn normalize_bad_mode() {
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let mut tensor = Kruskal::from_data(&weights, &factors);
+        tensor.normalize(&None, &None, &None, &Some(3));
+    }
 }
