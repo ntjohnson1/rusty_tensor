@@ -197,7 +197,9 @@ impl Kruskal {
         }
     }
 
-    fn fixsigns_other(&mut self, other: &Kruskal) {}
+    fn fixsigns_other(&mut self, other: &Kruskal) {
+        panic!("Fix signs based on other ktensor not supported yet");
+    }
 }
 
 #[cfg(test)]
