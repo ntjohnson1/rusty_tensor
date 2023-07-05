@@ -25,13 +25,13 @@ impl Kruskal {
         }
         Self {
             weights: weights.clone(),
-            factor_matrices: factors.to_vec().clone(),
+            factor_matrices: factors.to_vec(),
         }
     }
 
     pub fn from_factor_matrices(factors: &[Array<f64, Ix2>]) -> Self {
         let ncomponents = factors[0].shape()[1];
-        Kruskal::from_data(&Array::<f64, Ix1>::ones((ncomponents,)), &factors)
+        Kruskal::from_data(&Array::<f64, Ix1>::ones((ncomponents,)), factors)
     }
 
     pub fn ndims(&self) -> usize {
@@ -79,13 +79,13 @@ impl Kruskal {
             self.weights = swap;
             for i in 0..self.ndims() {
                 let mut swap = Array::<f64, Ix2>::zeros(self.factor_matrices[i].raw_dim());
-                for j in 0..permutation.len() {
+                for (j, perm_value) in permutation.iter().enumerate() {
                     swap.slice_mut(s![.., j])
-                        .assign(&self.factor_matrices[i].slice(s![.., permutation[j]]));
+                        .assign(&self.factor_matrices[i].slice(s![.., *perm_value]));
                 }
                 self.factor_matrices[i] = swap;
             }
-            return;
+            // Need early return when full implementation complete
         }
     }
 
@@ -188,9 +188,8 @@ impl Kruskal {
             }
             let nflip = 2 * (negidx.len() / 2);
 
-            for i in 0..nflip {
-                let n = negidx[i];
-                self.factor_matrices[n]
+            for n in negidx.iter().take(nflip) {
+                self.factor_matrices[*n]
                     .slice_mut(s![.., r])
                     .map_inplace(|val| *val *= -1.0);
             }

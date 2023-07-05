@@ -8,9 +8,9 @@ pub fn khatrirao(factors: &[Array<f64, Ix2>], reverse: &Option<bool>) -> Array<f
         None => false,
     };
     let mut factor_it = if reverse {
-        Left(factors.into_iter().rev())
+        Left(factors.iter().rev())
     } else {
-        Right(factors.into_iter())
+        Right(factors.iter())
     };
 
     let first_idx = if reverse { 0 } else { factors.len() - 1 };

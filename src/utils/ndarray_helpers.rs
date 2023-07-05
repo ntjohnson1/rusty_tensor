@@ -8,7 +8,7 @@ use ndarray_linalg::Norm;
 pub fn max_abs(array: ArrayView<f64, Ix1>) -> f64 {
     let max_abs_value: f64 = array.iter().fold(0.0, |val_max, &val| {
         // Might want to panic on Nan?
-        if &val_max.abs() > &val.abs() {
+        if val_max.abs() > val.abs() {
             val_max
         } else {
             val
@@ -34,12 +34,11 @@ pub fn sign(value: f64) -> f64 {
 /// Helper to map to the name ndarray norms
 pub fn p_norm(array: ArrayView<f64, Ix1>, p: i64) -> f64 {
     // TODO explore other norm options/ inf norm representation
-    let norm = match p {
+    match p {
         1 => array.norm_l1(),
         2 => array.norm_l2(),
         _ => panic!("unsupported norm type"),
-    };
-    norm
+    }
 }
 
 #[cfg(test)]

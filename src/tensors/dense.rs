@@ -66,11 +66,11 @@ impl Dense {
         };
 
         // Check dimensions match
-        for i in 0..self.ndims() {
+        for (i, factor) in factors.iter().enumerate().take(self.ndims()) {
             if i == n {
                 continue;
             }
-            if factors[i].shape()[0] != self.shape[i] {
+            if factor.shape()[0] != self.shape[i] {
                 panic!("Entry {i} of list of arrays is wrong size");
             }
         }
@@ -85,7 +85,7 @@ impl Dense {
                 .data
                 .to_shape(((szn, szr), Order::ColumnMajor))
                 .unwrap();
-            return y.dot(&ur).to_owned();
+            y.dot(&ur).to_owned()
         } else if n == self.ndims() - 1 {
             let ul = khatrirao(&factors[0..self.ndims() - 1], &Some(true));
             let y = self
