@@ -6,8 +6,8 @@ use ndarray_linalg::Norm;
 pub struct Dense {
     // TODO probably want data trait on struct
     // for different data types
-    data: Array<f64, IxDyn>,
-    shape: Vec<usize>,
+    pub data: Array<f64, IxDyn>,
+    pub shape: Vec<usize>,
 }
 
 impl Dense {

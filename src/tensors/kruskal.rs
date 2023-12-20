@@ -4,8 +4,8 @@ use ndarray::{s, Array, Array2, Ix1, Ix2};
 #[derive(Debug)]
 pub struct Kruskal {
     // For now assume TODO throughout to make f64 generic
-    weights: Array<f64, Ix1>,
-    factor_matrices: Vec<Array<f64, Ix2>>,
+    pub weights: Array<f64, Ix1>,
+    pub factor_matrices: Vec<Array<f64, Ix2>>,
 }
 
 impl Kruskal {
