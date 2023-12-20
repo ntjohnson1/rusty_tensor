@@ -1,3 +1,5 @@
+use crate::tensors::dense::Dense;
+use crate::utils::khatrirao::khatrirao;
 use crate::utils::ndarray_helpers::{max_abs, p_norm, sign};
 use ndarray::{s, Array, Array2, Ix1, Ix2};
 
@@ -199,12 +201,28 @@ impl Kruskal {
     fn fixsigns_other(&mut self, other: &Kruskal) {
         panic!("Fix signs based on other ktensor not supported yet");
     }
+
+    pub fn full(&self) -> Dense {
+        let binding = self
+            .weights
+            .dot(&khatrirao(&self.factor_matrices, &Some(true)).t());
+        let data = binding;
+        Dense::from_data(&data.into_dyn().to_owned(), &Some(self.shape()))
+    }
+
+    // TODO make similar shape access for all tensors
+    pub fn shape(&self) -> Vec<usize> {
+        self.factor_matrices
+            .iter()
+            .map(|factor| factor.shape()[0])
+            .collect()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::array;
+    use ndarray::{array, IxDyn};
 
     #[test]
     fn empty_kruskal_tensor() {
@@ -477,5 +495,35 @@ mod tests {
         ];
         let mut tensor = Kruskal::from_data(&weights, &factors);
         tensor.normalize(&None, &None, &None, &Some(3));
+    }
+
+    #[test]
+    fn full_tensor() {
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let mut ktensor = Kruskal::from_data(&weights, &factors);
+        let data: Array<f64, IxDyn> = array![[29.0, 39.0], [63.0, 85.0]].into_dyn();
+        let shape: Vec<usize> = vec![2, 2];
+        let tensor = Dense::from_data(&data, &Some(shape));
+        print!(
+            "Result: {:?} and correct {:?}",
+            tensor.data,
+            ktensor.full().data
+        );
+        assert!(tensor.data.abs_diff_eq(&ktensor.full().data, 1e-8));
+    }
+
+    #[test]
+    fn get_shape() {
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let ktensor = Kruskal::from_data(&weights, &factors);
+        assert!(ktensor.shape() == vec![2, 2]);
     }
 }
