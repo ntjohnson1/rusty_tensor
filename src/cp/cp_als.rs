@@ -108,13 +108,16 @@ pub fn cp_als(
         } else {
             // The following input can be negative due to rounding
             // and truncation so abs is used
-            let normresidual = M.norm().powf(2.) - 2. * iprod;
-            fit = normresidual.clone();
+            // TODO replace M.full with kruskal innerproduct implementation
+            let normresidual = (normX.powf(2.) + M.norm().powf(2.)
+                - 2. * input_tensor.innerprod(&M.full()))
+            .abs()
+            .sqrt();
+            fit = 1. - (normresidual / normX);
         }
         let fitchange = (fitold - fit).abs();
 
         // Check for convergence
-        // TODO make flag just be bool condition
         let flag = (iteration > 0) && (fitchange < stoptol);
 
         // TODO some printitn support
@@ -124,8 +127,10 @@ pub fn cp_als(
     }
     // Clean up final result
 
+    // TODO our arrange and normalize coupling
     // Arrange the final tensor so columns are normalized.
-    M.arrange(&None);
+    //M.arrange(&None);
+    M.normalize(&None, &Some(true), &None, &None);
 
     // Optionally fix signs
     if fixsigns {
@@ -140,9 +145,29 @@ pub fn cp_als(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ndarray::{array, IxDyn};
+
     #[test]
+    #[should_panic]
     fn empty_interface() {
+        // TODO should panic until we can randomly initialize
         let tensor = Dense::new();
         cp_als(&tensor, 1, None, None, None, None, None, None);
+    }
+
+    #[test]
+    fn smoke_interface() {
+        let data: Array<f64, IxDyn> = array![[29.0, 39.0], [63.0, 85.0]].into_dyn();
+        let shape: Vec<usize> = vec![2, 2];
+        let tensor = Dense::from_data(&data, &Some(shape));
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let ktensor = Kruskal::from_data(&weights, &factors);
+        let M = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
+        print!("Result: {:?} and correct {:?}", tensor.data, M.full().data);
+        assert!(tensor.data.abs_diff_eq(&M.full().data, 1e-8));
     }
 }
