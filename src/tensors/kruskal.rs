@@ -10,6 +10,12 @@ pub struct Kruskal {
     pub factor_matrices: Vec<Array<f64, Ix2>>,
 }
 
+impl Default for Kruskal {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Kruskal {
     pub fn new() -> Self {
         Self {
@@ -142,7 +148,7 @@ impl Kruskal {
 
         // TODO how to handle 'all'
         // Absorb weight into factors
-        if weight_factor.is_some() && false {
+        if false {
             // All factors
             let d =
                 Array2::from_diag(&self.weights.mapv(|val| val.powf(1.0 / self.ndims() as f64)));
@@ -198,7 +204,7 @@ impl Kruskal {
         }
     }
 
-    fn fixsigns_other(&mut self, other: &Kruskal) {
+    fn fixsigns_other(&mut self, _other: &Kruskal) {
         panic!("Fix signs based on other ktensor not supported yet");
     }
 
@@ -227,6 +233,10 @@ mod tests {
     #[test]
     fn empty_kruskal_tensor() {
         let tensor = Kruskal::new();
+        assert!(tensor.weights.is_empty());
+        assert!(tensor.factor_matrices.is_empty());
+
+        let tensor = Kruskal::default();
         assert!(tensor.weights.is_empty());
         assert!(tensor.factor_matrices.is_empty());
     }
@@ -504,7 +514,7 @@ mod tests {
             array![[1.0, 2.0], [3.0, 4.0]],
             array![[5.0, 6.0], [7.0, 8.0]],
         ];
-        let mut ktensor = Kruskal::from_data(&weights, &factors);
+        let ktensor = Kruskal::from_data(&weights, &factors);
         let data: Array<f64, IxDyn> = array![[29.0, 39.0], [63.0, 85.0]].into_dyn();
         let shape: Vec<usize> = vec![2, 2];
         let tensor = Dense::from_data(&data, &Some(shape));

@@ -26,13 +26,13 @@ pub fn cp_als(
     let fixsigns = fixsigns.unwrap_or(false);
     // TODO arg validation
 
-    let N = input_tensor.ndims();
-    let normX = input_tensor.norm();
-    let mut M = Kruskal::new();
-    let mut U = init.factor_matrices.clone();
+    let ndim = input_tensor.ndims();
+    let norm_x = input_tensor.norm();
+    let mut model = Kruskal::new();
+    let mut factors = init.factor_matrices.clone();
     let mut fit = 0.0;
     // Store the last mttkrp result to accelerate fitness computation
-    let mut U_mttkrp =
+    let mut u_mttkrp =
         Array::<f64, Ix2>::zeros((input_tensor.shape[dimorder[dimorder.len() - 1]], rank));
 
     if printitn > 0 {
@@ -40,9 +40,10 @@ pub fn cp_als(
     }
 
     // Main Loop: Iterate until convergence
-    let mut UtU = Array::<f64, Ix3>::zeros((rank, rank, N));
-    for n in 0..N {
-        UtU.slice_mut(s![.., .., n]).assign(&U[n].t().dot(&U[n]));
+    let mut utu = Array::<f64, Ix3>::zeros((rank, rank, ndim));
+    for (n, factor) in factors.iter().enumerate().take(ndim) {
+        utu.slice_mut(s![.., .., n])
+            .assign(&factor.t().dot(factor));
     }
 
     for iteration in 0..maxiters {
@@ -51,27 +52,27 @@ pub fn cp_als(
         let mut weights = Array::<f64, Ix1>::zeros((rank,));
         // Iterate over all N modes of the tensor
         for n in dimorder {
-            let mut Unew = input_tensor.mttkrp(&U, *n);
+            let mut factors_new = input_tensor.mttkrp(&factors, *n);
 
             // Save the last mttkrp for fitness check.
             if *n == dimorder.len() - 1 {
-                U_mttkrp = Unew.clone();
+                u_mttkrp = factors_new.clone();
             }
 
-            let mut Y = Array::<f64, Ix2>::ones((rank, rank));
-            for i in 0..N {
+            let mut y = Array::<f64, Ix2>::ones((rank, rank));
+            for i in 0..ndim {
                 if i != *n {
-                    Y = Y * UtU.slice(s![.., .., i]);
+                    y = y * utu.slice(s![.., .., i]);
                 }
             }
 
-            if Y.abs_diff_eq(&Array::<f64, Ix2>::zeros((rank, rank)), 1e-8) {
-                Unew = Array::<f64, Ix2>::zeros(Unew.raw_dim());
+            if y.abs_diff_eq(&Array::<f64, Ix2>::zeros((rank, rank)), 1e-8) {
+                factors_new = Array::<f64, Ix2>::zeros(factors_new.raw_dim());
             } else {
-                for i in 0..N {
-                    // TODO using same Y every time so update to more efficient pre-factor
-                    let mut update = Unew.slice_mut(s![i, ..]);
-                    update.assign(&Y.t().solve(&update.t()).unwrap().t());
+                for i in 0..ndim {
+                    // TODO using same y every time so update to more efficient pre-factor
+                    let mut update = factors_new.slice_mut(s![i, ..]);
+                    update.assign(&y.t().solve(&update.t()).unwrap().t());
                 }
             }
 
@@ -79,41 +80,42 @@ pub fn cp_als(
             weights = Array::<f64, Ix1>::zeros((rank,));
             if iteration == 0 {
                 for i in 0..rank {
-                    weights[i] = Unew.slice(s![i, ..]).norm();
+                    weights[i] = factors_new.slice(s![i, ..]).norm();
                 }
             } else {
                 for i in 0..rank {
-                    weights[i] = Unew.slice(s![i, ..]).norm_max().max(1.);
+                    weights[i] = factors_new.slice(s![i, ..]).norm_max().max(1.);
                 }
             }
             if !weights.abs_diff_eq(&Array::<f64, Ix1>::zeros((rank,)), 1e-8) {
-                Unew = Unew / weights.clone();
+                factors_new = factors_new / weights.clone();
             }
 
-            U[*n] = Unew;
+            factors[*n] = factors_new;
             //FIXME: Left off on defining this update
-            UtU.slice_mut(s![.., .., *n]).assign(&U[*n].t().dot(&U[*n]));
+            utu.slice_mut(s![.., .., *n])
+                .assign(&factors[*n].t().dot(&factors[*n]));
         }
-        M = Kruskal::from_data(&weights, &U);
+        model = Kruskal::from_data(&weights, &factors);
 
         // This is equivalent to innerprod(X,P)
-        let iprod = ((&M.factor_matrices[dimorder[dimorder.len() - 1]] * &U_mttkrp)
+        let iprod = ((&model.factor_matrices[dimorder[dimorder.len() - 1]] * &u_mttkrp)
             .sum_axis(Axis(0))
             * weights)
             .sum();
 
-        if normX == 0.0 {
-            let normresidual = M.norm().powf(2.) - 2. * iprod;
-            fit = normresidual.clone();
+        if norm_x == 0.0 {
+            let normresidual = model.norm().powf(2.) - 2. * iprod;
+            fit = normresidual;
         } else {
             // The following input can be negative due to rounding
             // and truncation so abs is used
-            // TODO replace M.full with kruskal innerproduct implementation
-            let normresidual = (normX.powf(2.) + M.norm().powf(2.)
-                - 2. * input_tensor.innerprod(&M.full()))
+            // TODO replace model.full with kruskal innerproduct implementation
+            let normresidual = (norm_x.powf(2.) + model.norm().powf(2.)
+                - 2. * input_tensor.innerprod(&model.full()))
             .abs()
             .sqrt();
-            fit = 1. - (normresidual / normX);
+            fit = 1. - (normresidual / norm_x);
         }
         let fitchange = (fitold - fit).abs();
 
@@ -129,17 +131,17 @@ pub fn cp_als(
 
     // TODO our arrange and normalize coupling
     // Arrange the final tensor so columns are normalized.
-    //M.arrange(&None);
-    M.normalize(&None, &Some(true), &None, &None);
+    //model.arrange(&None);
+    model.normalize(&None, &Some(true), &None, &None);
 
     // Optionally fix signs
     if fixsigns {
-        M.fixsigns(&None);
+        model.fixsigns(&None);
     }
 
     // TODO printitn support and output dict
 
-    M
+    model
 }
 
 #[cfg(test)]
@@ -166,8 +168,8 @@ mod tests {
             array![[5.0, 6.0], [7.0, 8.0]],
         ];
         let ktensor = Kruskal::from_data(&weights, &factors);
-        let M = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
-        print!("Result: {:?} and correct {:?}", tensor.data, M.full().data);
-        assert!(tensor.data.abs_diff_eq(&M.full().data, 1e-8));
+        let model = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
+        print!("Result: {:?} and correct {:?}", tensor.data, model.full().data);
+        assert!(tensor.data.abs_diff_eq(&model.full().data, 1e-8));
     }
 }

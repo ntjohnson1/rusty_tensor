@@ -10,6 +10,12 @@ pub struct Dense {
     pub shape: Vec<usize>,
 }
 
+impl Default for Dense {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Dense {
     pub fn new() -> Self {
         Self {
@@ -130,6 +136,10 @@ mod tests {
     #[test]
     fn empty_dense_tensor() {
         let tensor = Dense::new();
+        assert!(tensor.shape.is_empty());
+        assert!(tensor.data.is_empty());
+
+        let tensor = Dense::default();
         assert!(tensor.shape.is_empty());
         assert!(tensor.data.is_empty());
     }
