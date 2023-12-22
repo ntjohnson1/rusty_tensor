@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.20", features = ["extension-module", "abi3-py38"] }
 numpy = "0.20"
-rusty_tensor = { path = ".." }
+# TODO make feature flag for this package
+rusty_tensor = { path = "..", features = ["openblas"] }
 
 [workspace]
