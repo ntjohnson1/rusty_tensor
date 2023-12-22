@@ -1,5 +1,6 @@
 use pyo3::prelude::*;
 
+use crate::tensors::dense::Dense;
 use numpy::ndarray::Array2;
 use numpy::{PyReadwriteArray1, PyReadwriteArray2};
 use pyo3::{types::PyIterator, PyAny, PyResult};
@@ -7,7 +8,7 @@ use rusty_tensor::tensors::kruskal::Kruskal as _Kruskal;
 
 #[pyclass]
 pub struct Kruskal {
-    _kruskal: _Kruskal,
+    pub _kruskal: _Kruskal,
 }
 
 #[pymethods]
@@ -35,6 +36,12 @@ impl Kruskal {
 
     pub fn norm(&self) -> f64 {
         self._kruskal.norm()
+    }
+
+    pub fn full(&self) -> Dense {
+        Dense {
+            _dense: self._kruskal.full(),
+        }
     }
 
     pub fn __str__(&self) -> String {

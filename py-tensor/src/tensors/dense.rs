@@ -6,7 +6,7 @@ use rusty_tensor::tensors::dense::Dense as _Dense;
 
 #[pyclass]
 pub struct Dense {
-    _dense: _Dense,
+    pub _dense: _Dense,
 }
 
 #[pymethods]
