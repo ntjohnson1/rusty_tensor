@@ -36,7 +36,7 @@ pub fn cp_als(
         Array::<f64, Ix2>::zeros((input_tensor.shape[dimorder[dimorder.len() - 1]], rank));
 
     if printitn > 0 {
-        print!("CP ALS:");
+        print!("CP ALS:\n");
     }
 
     // Main Loop: Iterate until convergence
@@ -65,11 +65,10 @@ pub fn cp_als(
                     y = y * utu.slice(s![.., .., i]);
                 }
             }
-
-            if y.abs_diff_eq(&Array::<f64, Ix2>::zeros((rank, rank)), 1e-8) {
+            if y.abs_diff_eq(&Array::<f64, Ix2>::zeros((rank, rank)), 1e-16) {
                 factors_new = Array::<f64, Ix2>::zeros(factors_new.raw_dim());
             } else {
-                for i in 0..ndim {
+                for i in 0..input_tensor.shape[*n] {
                     // TODO using same y every time so update to more efficient pre-factor
                     let mut update = factors_new.slice_mut(s![i, ..]);
                     update.assign(&y.t().solve(&update.t()).unwrap().t());
@@ -92,7 +91,6 @@ pub fn cp_als(
             }
 
             factors[*n] = factors_new;
-            //FIXME: Left off on defining this update
             utu.slice_mut(s![.., .., *n])
                 .assign(&factors[*n].t().dot(&factors[*n]));
         }
