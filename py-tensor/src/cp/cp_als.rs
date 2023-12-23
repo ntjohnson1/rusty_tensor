@@ -4,11 +4,11 @@ use crate::tensors::{dense::Dense, kruskal::Kruskal};
 use rusty_tensor::cp::cp_als::cp_als as _cp_als;
 
 #[pyfunction]
-pub fn cp_als(input_tensor: &Dense, init: &Kruskal) -> Kruskal {
+pub fn cp_als(input_tensor: &Dense, init: &Kruskal, rank: usize) -> Kruskal {
     Kruskal {
         _kruskal: _cp_als(
             &input_tensor._dense,
-            2,
+            rank,
             None,
             None,
             None,

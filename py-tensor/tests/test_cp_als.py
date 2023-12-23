@@ -3,6 +3,8 @@ import pytest
 import numpy as np
 
 def test_constructor():
+    data = np.array([[29.0, 39.0], [63.0, 85.0]])
+    rank = 2
     d = Dense(np.array([[29.0, 39.0], [63.0, 85.0]]))
     weights = np.array([1.0, 2.0])
     factors = (
@@ -10,4 +12,5 @@ def test_constructor():
         np.array([[5.0, 6.0], [7.0, 8.0]])
     )
     k = Kruskal(weights, factors)
-    cp_als(d, k)
+    result = cp_als(d, k, rank)
+    np.testing.assert_allclose(result.full().data, data)
