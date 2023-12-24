@@ -36,7 +36,7 @@ pub fn cp_als(
         Array::<f64, Ix2>::zeros((input_tensor.shape[dimorder[dimorder.len() - 1]], rank));
 
     if printitn > 0 {
-        print!("CP ALS:\n");
+        print!("\nCP ALS:\n");
     }
 
     // Main Loop: Iterate until convergence
@@ -108,9 +108,8 @@ pub fn cp_als(
         } else {
             // The following input can be negative due to rounding
             // and truncation so abs is used
-            // TODO replace model.full with kruskal innerproduct implementation
             let normresidual = (norm_x.powf(2.) + model.norm().powf(2.)
-                - 2. * input_tensor.innerprod(&model.full()))
+                - 2. * iprod)
             .abs()
             .sqrt();
             fit = 1. - (normresidual / norm_x);
