@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/ntjohnson1/rusty_tensor/badge.svg?branch=main)](https://coveralls.io/github/ntjohnson1/rusty_tensor?branch=main)
+
 # rusty_tensor
 Learning About Using Rust From Python via Tensor Toolbox
 
