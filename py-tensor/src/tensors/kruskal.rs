@@ -14,7 +14,7 @@ pub struct Kruskal {
 #[pymethods]
 impl Kruskal {
     #[new]
-    pub fn new<'py>(mut weights: PyReadwriteArray1<'py, f64>, factors: &PyAny) -> PyResult<Self> {
+    pub fn new(mut weights: PyReadwriteArray1<'_, f64>, factors: &PyAny) -> PyResult<Self> {
         let weights = weights.as_array_mut();
         let mut extracted = Vec::<Array2<f64>>::new();
         //let factors: &[Array2<f64>] = factors.extract()?;

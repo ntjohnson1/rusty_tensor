@@ -1,10 +1,6 @@
 use pyo3::prelude::*;
 
-use numpy::{
-    ToPyArray,
-    PyArrayDyn,
-    PyReadwriteArrayDyn
-};
+use numpy::{PyArrayDyn, PyReadwriteArrayDyn, ToPyArray};
 
 use rusty_tensor::tensors::dense::Dense as _Dense;
 
@@ -16,7 +12,7 @@ pub struct Dense {
 #[pymethods]
 impl Dense {
     #[new]
-    pub fn new<'py>(mut data: PyReadwriteArrayDyn<'py, f64>) -> Self {
+    pub fn new(mut data: PyReadwriteArrayDyn<'_, f64>) -> Self {
         let data = data.as_array_mut();
         Dense {
             _dense: _Dense::from_data(&data.to_owned(), &None),
