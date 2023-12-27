@@ -1,6 +1,6 @@
 use crate::tensors::dense::Dense;
 use crate::tensors::kruskal::Kruskal;
-use ndarray::{s, Array, Axis, Ix1, Ix2, Ix3};
+use ndarray::{s, Array, Axis, Ix1, Ix2, Ix3, ShapeBuilder};
 use ndarray_linalg::{Norm, Solve};
 
 //TODO add builder pattern here for argument simplicity/explicitness
@@ -33,23 +33,22 @@ pub fn cp_als(
     let mut fit = 0.0;
     // Store the last mttkrp result to accelerate fitness computation
     let mut u_mttkrp =
-        Array::<f64, Ix2>::zeros((input_tensor.shape[dimorder[dimorder.len() - 1]], rank));
+        Array::<f64, Ix2>::zeros((input_tensor.shape[dimorder[dimorder.len() - 1]], rank).f());
 
     if printitn > 0 {
         print!("\nCP ALS:\n");
     }
 
     // Main Loop: Iterate until convergence
-    let mut utu = Array::<f64, Ix3>::zeros((rank, rank, ndim));
+    let mut utu = Array::<f64, Ix3>::zeros((rank, rank, ndim).f());
     for (n, factor) in factors.iter().enumerate().take(ndim) {
-        utu.slice_mut(s![.., .., n])
-            .assign(&factor.t().dot(factor));
+        utu.slice_mut(s![.., .., n]).assign(&factor.t().dot(factor));
     }
 
     for iteration in 0..maxiters {
         let fitold = fit;
 
-        let mut weights = Array::<f64, Ix1>::zeros((rank,));
+        let mut weights = Array::<f64, Ix1>::zeros((rank,).f());
         // Iterate over all N modes of the tensor
         for n in dimorder {
             let mut factors_new = input_tensor.mttkrp(&factors, *n);
@@ -59,14 +58,14 @@ pub fn cp_als(
                 u_mttkrp = factors_new.clone();
             }
 
-            let mut y = Array::<f64, Ix2>::ones((rank, rank));
+            let mut y = Array::<f64, Ix2>::ones((rank, rank).f());
             for i in 0..ndim {
                 if i != *n {
                     y = y * utu.slice(s![.., .., i]);
                 }
             }
-            if y.abs_diff_eq(&Array::<f64, Ix2>::zeros((rank, rank)), 1e-16) {
-                factors_new = Array::<f64, Ix2>::zeros(factors_new.raw_dim());
+            if y.iter().all(|&x| x == 0.0) {
+                factors_new = Array::<f64, Ix2>::zeros(factors_new.raw_dim().f());
             } else {
                 for i in 0..input_tensor.shape[*n] {
                     // TODO using same y every time so update to more efficient pre-factor
@@ -76,7 +75,7 @@ pub fn cp_als(
             }
 
             // Normalize each vector to prevent singularities in coeficients
-            weights = Array::<f64, Ix1>::zeros((rank,));
+            weights = Array::<f64, Ix1>::zeros((rank,).f());
             if iteration == 0 {
                 for i in 0..rank {
                     weights[i] = factors_new.slice(s![i, ..]).norm();
@@ -86,7 +85,7 @@ pub fn cp_als(
                     weights[i] = factors_new.slice(s![i, ..]).norm_max().max(1.);
                 }
             }
-            if !weights.abs_diff_eq(&Array::<f64, Ix1>::zeros((rank,)), 1e-8) {
+            if !weights.iter().all(|&x| x == 0.0) {
                 factors_new = factors_new / weights.clone();
             }
 
@@ -108,10 +107,9 @@ pub fn cp_als(
         } else {
             // The following input can be negative due to rounding
             // and truncation so abs is used
-            let normresidual = (norm_x.powf(2.) + model.norm().powf(2.)
-                - 2. * iprod)
-            .abs()
-            .sqrt();
+            let normresidual = (norm_x.powf(2.) + model.norm().powf(2.) - 2. * iprod)
+                .abs()
+                .sqrt();
             fit = 1. - (normresidual / norm_x);
         }
         let fitchange = (fitold - fit).abs();
@@ -166,7 +164,11 @@ mod tests {
         ];
         let ktensor = Kruskal::from_data(&weights, &factors);
         let model = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
-        print!("Result: {:?} and correct {:?}", tensor.data, model.full().data);
+        print!(
+            "Result: {:?} and correct {:?}",
+            tensor.data,
+            model.full().data
+        );
         assert!(tensor.data.abs_diff_eq(&model.full().data, 1e-8));
     }
 }

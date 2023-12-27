@@ -1,5 +1,5 @@
 use crate::utils::khatrirao::khatrirao;
-use ndarray::{s, Array, Ix2, IxDyn, Order};
+use ndarray::{s, Array, Ix2, IxDyn, Order, ShapeBuilder};
 use ndarray_linalg::Norm;
 
 #[derive(Debug)]
@@ -33,7 +33,10 @@ impl Dense {
             Some(value) => {
                 // Placeholder
                 Self {
-                    data: data.clone().into_shape(value.clone()).unwrap(),
+                    data: data
+                        .to_shape((value.clone(), Order::ColumnMajor))
+                        .unwrap()
+                        .to_owned(),
                     shape: value.clone(),
                 }
             }
@@ -112,7 +115,7 @@ impl Dense {
                 .unwrap();
             y = y.dot(&ul).into();
             let y = y.to_shape(((szl, szn, range), Order::ColumnMajor)).unwrap();
-            let mut v = Array::<f64, Ix2>::ones((szn, range));
+            let mut v = Array::<f64, Ix2>::ones((szn, range).f());
             // TODO: The remove axis is required because the result is a column
             // check if we can take a column slice of v ([:, [r]]) in numpy
             for r in 0..range {
