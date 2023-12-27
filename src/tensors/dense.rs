@@ -220,4 +220,40 @@ mod tests {
         let result = tensor.mttkrp(&factors, 2);
         result.abs_diff_eq(&m2, 1e-8);
     }
+
+    #[test]
+    #[should_panic]
+    fn one_d_mttkrp() {
+        let array = Array::<f64, IxDyn>::ones(IxDyn(&[2]));
+        let tensor = Dense::from_data(&array, &None);
+        let factors = vec![
+            array![[1.0, 3.0], [2.0, 4.0]],
+            array![[5.0, 8.0], [6.0, 9.0], [7.0, 10.0]],
+            array![[11.0, 15.0], [12.0, 16.0], [13.0, 17.0], [14.0, 18.0]],
+        ];
+        let result = tensor.mttkrp(&factors, 0);
+    }
+    #[test]
+    #[should_panic]
+    fn mttkrp_too_few_factors() {
+        let array = Array::<f64, IxDyn>::ones(IxDyn(&[2, 2]));
+        let tensor = Dense::from_data(&array, &None);
+        let factors = vec![
+            array![[1.0, 3.0], [2.0, 4.0]],
+            array![[5.0, 8.0], [6.0, 9.0], [7.0, 10.0]],
+        ];
+        let result = tensor.mttkrp(&factors, 0);
+    }
+    #[test]
+    #[should_panic]
+    fn mttkrp_wrong_shape_factors() {
+        let array = Array::<f64, IxDyn>::ones(IxDyn(&[2, 2]));
+        let tensor = Dense::from_data(&array, &None);
+        let factors = vec![
+            array![[1.0, 3.0, 0.0], [2.0, 4.0, 0.0]],
+            array![[5.0, 8.0], [6.0, 9.0], [7.0, 10.0]],
+            array![[11.0, 15.0], [12.0, 16.0], [13.0, 17.0], [14.0, 18.0]],
+        ];
+        let result = tensor.mttkrp(&factors, 0);
+    }
 }

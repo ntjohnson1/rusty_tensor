@@ -171,4 +171,33 @@ mod tests {
         );
         assert!(tensor.data.abs_diff_eq(&model.full().data, 1e-8));
     }
+
+    #[test]
+    fn zero_init() {
+        // Confirm we avoid a panic
+        let data: Array<f64, IxDyn> = array![[29.0, 39.0], [63.0, 85.0]].into_dyn();
+        let shape: Vec<usize> = vec![2, 2];
+        let tensor = Dense::from_data(&data, &Some(shape));
+        let weights = array![0.0, 0.0];
+        let factors = vec![
+            array![[0.0, 0.0], [0.0, 0.0]],
+            array![[0.0, 0.0], [0.0, 0.0]],
+        ];
+        let ktensor = Kruskal::from_data(&weights, &factors);
+        let model = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
+    }
+
+    #[test]
+    fn zero_data() {
+        let data: Array<f64, IxDyn> = array![[0.0, 0.0], [0.0, 0.0]].into_dyn();
+        let shape: Vec<usize> = vec![2, 2];
+        let tensor = Dense::from_data(&data, &Some(shape));
+        let weights = array![0.0, 0.0];
+        let factors = vec![
+            array![[0.0, 0.0], [0.0, 0.0]],
+            array![[0.0, 0.0], [0.0, 0.0]],
+        ];
+        let ktensor = Kruskal::from_data(&weights, &factors);
+        let model = cp_als(&tensor, 2, None, None, None, Some(&ktensor), None, None);
+    }
 }
