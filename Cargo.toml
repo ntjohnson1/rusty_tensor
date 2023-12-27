@@ -12,5 +12,6 @@ either = "1.8.1"
 
 [features]
 openblas = ["ndarray-linalg/openblas"]
+openblas-system = ["ndarray-linalg/openblas-system"]
 netlib = ["ndarray-linalg/netlib"]
 intel-mkl = ["ndarray-linalg/intel-mkl"]
