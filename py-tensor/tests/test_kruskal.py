@@ -1,4 +1,4 @@
-from tensor_ext import Kruskal
+from rusty_tensor import Kruskal
 import pytest
 import numpy as np
 

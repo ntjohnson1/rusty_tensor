@@ -724,6 +724,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusty-tensor"
+version = "0.1.0"
+dependencies = [
+ "numpy",
+ "pyo3",
+ "rusty_tensor",
+]
+
+[[package]]
 name = "rusty_tensor"
 version = "0.1.0"
 dependencies = [
@@ -855,15 +864,6 @@ dependencies = [
  "redox_syscall",
  "rustix",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "tensor-ext"
-version = "0.1.0"
-dependencies = [
- "numpy",
- "pyo3",
- "rusty_tensor",
 ]
 
 [[package]]

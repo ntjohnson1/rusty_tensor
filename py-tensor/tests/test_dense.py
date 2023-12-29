@@ -1,4 +1,4 @@
-from tensor_ext import Dense
+from rusty_tensor import Dense
 import pytest
 import numpy as np
 

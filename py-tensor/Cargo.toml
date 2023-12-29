@@ -1,10 +1,10 @@
 [package]
-name = "tensor-ext"
+name = "rusty-tensor"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "tensor_ext"
+name = "rusty_tensor"
 crate-type = ["cdylib"]
 
 [dependencies]

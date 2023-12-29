@@ -1,4 +1,4 @@
-from tensor_ext import Dense, Kruskal, cp_als
+from rusty_tensor import Dense, Kruskal, cp_als
 import pytest
 import numpy as np
 import pyttb as ttb

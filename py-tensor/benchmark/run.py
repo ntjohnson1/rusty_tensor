@@ -1,5 +1,5 @@
 import pyttb as ttb
-from tensor_ext import Dense, Kruskal, cp_als
+from rusty_tensor import Dense, Kruskal, cp_als
 from typing import Tuple
 import time
 import numpy as np
