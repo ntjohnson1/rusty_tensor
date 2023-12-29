@@ -1,5 +1,5 @@
 [project]
-name = "tensors"
+name = "rusty_tensor"
 
 [build-system]
 build-backend = "maturin"
@@ -11,6 +11,33 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "black[jupyter]",
     "pytest",
+    # Until we get around to releasing 2.0
     "pyttb@git+https://github.com/sandialabs/pyttb",
+    "ruff",
 ]
+
+[tool.ruff]
+select = ["E", "F", "PL", "W", "I", "N", "NPY", "RUF", "B"]
+ignore = [
+    # Ignored in conversion to ruff since not previously enforced
+    "PLR2004",
+    # Lower case in function, matching MATLAB names
+    "N806",
+    # Argument name lower case, matching MATLAB names
+    "N803",
+    # Class name not CapWords, matching MATLAB names
+    "N801",
+    # Numpy legacy random transition is a TODO
+    "NPY002",
+    # See #184 for issue related to asserts
+    "B011",
+    # There is ongoing discussion about logging/warning etc
+    "B028",
+]
+[tool.ruff.per-file-ignores]
+# See  see https://github.com/astral-sh/ruff/issues/3172 for details on this becoming simpler
+
+# Everything but I, F (to catch import mess and potential logic errors)
+"tests/**.py" = ["E", "PL", "W", "N", "NPY", "RUF", "B"]

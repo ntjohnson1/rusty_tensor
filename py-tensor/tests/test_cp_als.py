@@ -1,20 +1,18 @@
-from rusty_tensor import Dense, Kruskal, cp_als
-import pytest
 import numpy as np
 import pyttb as ttb
+from rusty_tensor import Dense, Kruskal, cp_als
+
 
 def test_constructor():
     data = np.array([[29.0, 39.0], [63.0, 85.0]])
     rank = 2
     d = Dense(np.array([[29.0, 39.0], [63.0, 85.0]]))
     weights = np.array([1.0, 2.0])
-    factors = (
-        np.array([[1.0, 2.0], [3.0, 4.0]]),
-        np.array([[5.0, 6.0], [7.0, 8.0]])
-    )
+    factors = (np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0], [7.0, 8.0]]))
     k = Kruskal(weights, factors)
     result = cp_als(d, k, rank)
     np.testing.assert_allclose(result.full().data, data)
+
 
 def test_comparison():
     rank = 2

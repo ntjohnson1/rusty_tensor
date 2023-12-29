@@ -1,18 +1,22 @@
+import time
+from typing import Tuple
+
+import numpy as np
 import pyttb as ttb
 from rusty_tensor import Dense, Kruskal, cp_als
-from typing import Tuple
-import time
-import numpy as np
+
 
 def run_pyttb(source: ttb.tensor, init: ttb.ktensor, rank: int) -> ttb.ktensor:
     M, _, _ = ttb.cp_als(source, rank, init=init, printitn=-1)
     return M
 
-def run_rusty(source:Dense, init: Kruskal, rank:int) -> Kruskal:
+
+def run_rusty(source: Dense, init: Kruskal, rank: int) -> Kruskal:
     M = cp_als(source, init, rank)
     return M
 
-def benchmark(shape: Tuple[int,...], num_iters: int):
+
+def benchmark(shape: Tuple[int, ...], num_iters: int):
     pyttb_time = 0.0
     rusty_time = 0.0
     for _ in range(num_iters):
@@ -35,11 +39,8 @@ def benchmark(shape: Tuple[int,...], num_iters: int):
         rusty_time += time.time() - start
 
         np.testing.assert_allclose(pyttb_result.full().data, rusty_result.full().data)
-    print(
-        f"Pyttb time: {pyttb_time}\n"
-        f"Rust time: {rusty_time}\n"
-        f"Shape: {shape}"
-    )
+    print(f"Pyttb time: {pyttb_time}\n" f"Rust time: {rusty_time}\n" f"Shape: {shape}")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     benchmark((100, 100, 100), 10)
