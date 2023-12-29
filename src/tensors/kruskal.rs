@@ -368,6 +368,19 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn fixsigns_other() {
+        let weights = array![1.0, 2.0];
+        let factors = vec![
+            array![[1.0, 2.0], [3.0, 4.0]],
+            array![[5.0, 6.0], [7.0, 8.0]],
+        ];
+        let mut tensor_1 = Kruskal::from_data(&weights, &factors);
+        let mut tensor_2 = Kruskal::from_data(&weights, &factors);
+        tensor_1.fixsigns(&Some(tensor_2));
+    }
+
+    #[test]
     fn arrange() {
         let weights = array![1.0, 2.0];
         let factors = vec![
@@ -417,6 +430,14 @@ mod tests {
         ];
         assert!(tensor_1.weights.abs_diff_eq(&expected_weights, 1e-8));
         assert!(tensor_1.factor_matrices[0].abs_diff_eq(&expected_factor_matrix0, 1e-8));
+        assert!(tensor_1.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
+        assert!(tensor_1.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
+
+        // Check negative weights get pushed to first factor
+        let mut tensor_1 = Kruskal::from_data(&(-1.0 * &weights), &factors);
+        tensor_1.normalize(&None, &None, &None, &None);
+        assert!(tensor_1.weights.abs_diff_eq(&expected_weights, 1e-8));
+        assert!(tensor_1.factor_matrices[0].abs_diff_eq(&(-1. * expected_factor_matrix0), 1e-8));
         assert!(tensor_1.factor_matrices[1].abs_diff_eq(&expected_factor_matrix1, 1e-8));
         assert!(tensor_1.factor_matrices[2].abs_diff_eq(&expected_factor_matrix2, 1e-8));
 
