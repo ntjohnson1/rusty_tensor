@@ -269,7 +269,10 @@ pub fn cp_als(args: Args) -> Kruskal {
         // Check for convergence
         let flag = (iteration > 0) && (fitchange < stoptol);
 
-        // TODO some printitn support
+        if (printitn > 0) && (iteration%printitn==0 || flag) {
+            print!("\tIter {:?}: f = {:1.6e} f-delta = {:7.1e}\n", iteration, fit, fitchange);
+        }
+
         if flag {
             break;
         }
@@ -286,7 +289,9 @@ pub fn cp_als(args: Args) -> Kruskal {
         model.fixsigns(&None);
     }
 
-    // TODO printitn support and output dict
+    if printitn > 0 {
+        print!("\tFinal f = {:1.6e}\n", fit);
+    }
 
     model
 }

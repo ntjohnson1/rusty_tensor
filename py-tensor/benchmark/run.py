@@ -7,12 +7,12 @@ from rusty_tensor import Dense, Kruskal, cp_als
 
 
 def run_pyttb(source: ttb.tensor, init: ttb.ktensor, rank: int) -> ttb.ktensor:
-    M, _, _ = ttb.cp_als(source, rank, init=init, printitn=-1)
+    M, _, _ = ttb.cp_als(source, rank, init=init, printitn=0)
     return M
 
 
 def run_rusty(source: Dense, init: Kruskal, rank: int) -> Kruskal:
-    M = cp_als(source, rank, init=init)
+    M = cp_als(source, rank, init=init, printitn=0)
     return M
 
 
