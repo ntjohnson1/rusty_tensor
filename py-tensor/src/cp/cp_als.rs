@@ -3,7 +3,8 @@ use pyo3::prelude::*;
 
 use crate::tensors::{dense::Dense, kruskal::Kruskal};
 use numpy::PyReadwriteArray1;
-use rusty_tensor::cp::cp_als::{cp_als as _cp_als, ArgBuilder, InitStrategy};
+use rusty_tensor::cp::cp_als::cp_als as _cp_als;
+use rusty_tensor::cp::cp_als_args::{ArgBuilder, InitStrategy};
 
 pub enum InitType<'a> {
     // FIXME resolve unpacking to avoid copy
