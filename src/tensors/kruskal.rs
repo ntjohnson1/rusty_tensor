@@ -3,7 +3,7 @@ use crate::utils::khatrirao::khatrirao;
 use crate::utils::ndarray_helpers::{max_abs, p_norm, sign};
 use ndarray::{s, Array, Array2, Ix1, Ix2};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Kruskal {
     // For now assume TODO throughout to make f64 generic
     pub weights: Array<f64, Ix1>,

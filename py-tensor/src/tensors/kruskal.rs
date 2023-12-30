@@ -7,6 +7,7 @@ use pyo3::{types::PyIterator, PyAny, PyResult};
 use rusty_tensor::tensors::kruskal::Kruskal as _Kruskal;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct Kruskal {
     pub _kruskal: _Kruskal,
 }

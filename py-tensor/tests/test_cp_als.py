@@ -10,7 +10,7 @@ def test_constructor():
     weights = np.array([1.0, 2.0])
     factors = (np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([[5.0, 6.0], [7.0, 8.0]]))
     k = Kruskal(weights, factors)
-    result = cp_als(d, k, rank)
+    result = cp_als(d, rank, init=k)
     np.testing.assert_allclose(result.full().data, data)
 
 
@@ -26,5 +26,5 @@ def test_comparison():
     rust_kruskal = Kruskal(weights, factors)
 
     pyttb_result, _, _ = ttb.cp_als(py_tensor, rank, init=py_ktensor, printitn=1)
-    rusty_result = cp_als(rust_dense, rust_kruskal, rank)
+    rusty_result = cp_als(rust_dense, rank, init=rust_kruskal)
     np.testing.assert_allclose(pyttb_result.full().data, rusty_result.full().data)
