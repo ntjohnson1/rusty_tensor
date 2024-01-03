@@ -1,7 +1,7 @@
 use crate::cp::cp_als_args::Args;
 use crate::tensors::kruskal::Kruskal;
 use ndarray::{s, Array, Axis, Ix1, Ix2, Ix3, ShapeBuilder};
-use ndarray_linalg::{Norm, Solve};
+use ndarray_linalg::{Factorize, Norm, Solve};
 
 pub fn cp_als(args: Args) -> Kruskal {
     // Parse args
@@ -56,23 +56,23 @@ pub fn cp_als(args: Args) -> Kruskal {
             if y.iter().all(|&x| x == 0.0) {
                 factors_new = Array::<f64, Ix2>::zeros(factors_new.raw_dim().f());
             } else {
-                for i in 0..input_tensor.shape[*n] {
-                    // TODO using same y every time so update to more efficient pre-factor
-                    let mut update = factors_new.slice_mut(s![i, ..]);
-                    update.assign(&y.t().solve(&update.t()).unwrap().t());
-                }
+                let f = y.t().factorize().unwrap();
+                factors_new
+                    .axis_iter_mut(Axis(0))
+                    .for_each(|mut slice| slice.assign(&f.solve(&slice.t()).unwrap().t()));
             }
 
             // Normalize each vector to prevent singularities in coeficients
-            weights = Array::<f64, Ix1>::zeros((rank,).f());
             if iteration == 0 {
-                for i in 0..rank {
-                    weights[i] = factors_new.slice(s![i, ..]).norm();
-                }
+                weights = factors_new
+                    .axis_iter(Axis(1))
+                    .map(|slice| slice.norm())
+                    .collect();
             } else {
-                for i in 0..rank {
-                    weights[i] = factors_new.slice(s![i, ..]).norm_max().max(1.);
-                }
+                weights = factors_new
+                    .axis_iter(Axis(1))
+                    .map(|slice| slice.norm_max().max(1.))
+                    .collect();
             }
             if !weights.iter().all(|&x| x == 0.0) {
                 factors_new = factors_new / weights.clone();

@@ -1,4 +1,4 @@
-use ndarray::{s, Array, ArrayView, Axis, Ix1, Ix2, IxDyn};
+use ndarray::{Array, ArrayView, Axis, Ix1, Ix2, IxDyn};
 use ndarray_linalg::Norm;
 
 /// Gets largest value (in aboslute terms) but return original value
