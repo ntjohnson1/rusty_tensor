@@ -31,6 +31,8 @@ jobs:
 
     - name: bindings
       run: |
+        sudo apt update
+        sudo apt install libopenblas-dev
         cd py-tensor
         pip install .[dev]
         pytest tests/
