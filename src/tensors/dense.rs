@@ -202,23 +202,22 @@ mod tests {
         ];
         // Division is unpacking the weight from pyttb ktensor version
         let m0 = array![[1800.0, 3564.0], [1800.0, 3564.0]] / 2.0;
-        let m1 = array![[300.0, 924.0], [300.0, 924.0], [300.0, 924.0]];
+        let m1 = array![[300.0, 924.0], [300.0, 924.0], [300.0, 924.0]] / 2.0;
         let m2 = array![
             [108.0, 378.0],
             [108.0, 378.0],
             [108.0, 378.0],
             [108.0, 378.0]
-        ];
+        ] / 2.0;
 
         let result = tensor.mttkrp(&factors, 0);
         assert!(result.abs_diff_eq(&m0, 1e-8));
 
         let result = tensor.mttkrp(&factors, 1);
-        print!("Result: {:?} and correct {:?}", result, m0);
-        result.abs_diff_eq(&m1, 1e-8);
+        assert!(result.abs_diff_eq(&m1, 1e-8));
 
         let result = tensor.mttkrp(&factors, 2);
-        result.abs_diff_eq(&m2, 1e-8);
+        assert!(result.abs_diff_eq(&m2, 1e-8));
     }
 
     #[test]
